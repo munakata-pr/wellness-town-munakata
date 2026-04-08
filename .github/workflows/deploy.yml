@@ -1,5 +1,4 @@
 name: Deploy to Sakura Server
-
 on:
   push:
     branches:
@@ -20,13 +19,17 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SAKURA_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Create deploy directory on server
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SAKURA_USER }}@${{ secrets.SAKURA_HOST }} \
+            "mkdir -p ${{ secrets.SAKURA_DEPLOY_PATH }}"
+
       - name: Deploy via rsync
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='*.md' \
+            --exclude='.git' --exclude='.github' --exclude='*.md' \
             ./ \
             ${{ secrets.SAKURA_USER }}@${{ secrets.SAKURA_HOST }}:${{ secrets.SAKURA_DEPLOY_PATH }}
 
